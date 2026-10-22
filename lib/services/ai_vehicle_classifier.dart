@@ -1,8 +1,9 @@
 import '../models/vehicle_type.dart';
 
+/// Assessment result model for vehicle classification.
 class AiDrivingAssessment {
   final VehicleType vehicleType;
-  final double confidence; // 0.0 to 1.0 (e.g. 0.94 = 94%)
+  final double confidence;
   final bool isDriving;
   final String reasoning;
   final double speedKmh;
@@ -21,136 +22,53 @@ class AiDrivingAssessment {
         vehicleType: VehicleType.stationary,
         confidence: 1.0,
         isDriving: false,
-        reasoning: 'Device is at rest (0.0 km/h) • Idle mode',
+        reasoning: 'Idle mode • Waiting for movement',
         speedKmh: 0.0,
         accelerationMps2: 0.0,
       );
 }
 
+/// Stub implementation of AI Vehicle Classifier.
+/// Core proprietary classification algorithms removed.
 class AiVehicleClassifier {
   AiVehicleClassifier._();
   static final AiVehicleClassifier instance = AiVehicleClassifier._();
 
   VehicleType? _simulatedVehicleOverride;
-  double _previousSpeedMs = 0.0;
-  DateTime _lastTimestamp = DateTime.now();
 
   void setSimulatedVehicleOverride(VehicleType? type) {
     _simulatedVehicleOverride = type;
   }
 
+  /// Classifies current motion into vehicle type and driving state.
   AiDrivingAssessment classify({
     required double currentSpeedKmh,
     required bool isPassengerMode,
     required bool isManualPause,
   }) {
-    final now = DateTime.now();
-    final elapsedSec = now.difference(_lastTimestamp).inMilliseconds / 1000.0;
-    _lastTimestamp = now;
+    // TODO: Implement your custom vehicle classification and ML model inference here.
+    // This is a stub placeholder for open collaboration.
 
-    final currentSpeedMs = currentSpeedKmh / 3.6;
-    double acceleration = 0.0;
-    if (elapsedSec > 0.1 && elapsedSec < 5.0) {
-      acceleration = (currentSpeedMs - _previousSpeedMs) / elapsedSec;
-    }
-    _previousSpeedMs = currentSpeedMs;
-
-    // 1. High-priority user context overrides
-    if (isManualPause) {
+    if (isManualPause || isPassengerMode) {
       return AiDrivingAssessment(
-        vehicleType: VehicleType.unknown,
-        confidence: 1.0,
+        vehicleType: _simulatedVehicleOverride ?? VehicleType.stationary,
+        confidence: 0.0,
         isDriving: false,
-        reasoning: 'Manual pause active • AI detection suspended',
+        reasoning: isManualPause ? 'Manual pause enabled' : 'Passenger mode enabled',
         speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
+        accelerationMps2: 0.0,
       );
     }
 
-    if (isPassengerMode) {
-      final detectedType = _simulatedVehicleOverride ??
-          (currentSpeedKmh > 20.0 ? VehicleType.car : VehicleType.stationary);
-      return AiDrivingAssessment(
-        vehicleType: detectedType,
-        confidence: 0.95,
-        isDriving: false,
-        reasoning: 'Passenger mode active • User is passenger • Calls ring freely',
-        speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
-      );
-    }
-
-    // 2. Simulated preset vehicle override if chosen by tester
-    if (_simulatedVehicleOverride != null) {
-      final overrideType = _simulatedVehicleOverride!;
-      final isVehicleDriving = overrideType.isMotorizedVehicle && currentSpeedKmh >= 15.0;
-      return AiDrivingAssessment(
-        vehicleType: overrideType,
-        confidence: 0.98,
-        isDriving: isVehicleDriving,
-        reasoning: 'Simulated preset: ${overrideType.displayName} (${currentSpeedKmh.toStringAsFixed(1)} km/h)',
-        speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
-      );
-    }
-
-    // 3. Core Benchmarks:
-    // (a) Idle: 0 - 2 km/h
-    if (currentSpeedKmh < 2.0) {
-      return AiDrivingAssessment(
-        vehicleType: VehicleType.stationary,
-        confidence: 0.98,
-        isDriving: false,
-        reasoning: 'Stationary (0.0 km/h) • Device at rest',
-        speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
-      );
-    }
-
-    // (b) Walking: 2 - 7 km/h
-    if (currentSpeedKmh < 7.0) {
-      return AiDrivingAssessment(
-        vehicleType: VehicleType.walking,
-        confidence: 0.94,
-        isDriving: false,
-        reasoning: 'Walking pace (${currentSpeedKmh.toStringAsFixed(1)} km/h) • Non-driving',
-        speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
-      );
-    }
-
-    // (c) Running: 7 - 15 km/h
-    if (currentSpeedKmh < 15.0) {
-      return AiDrivingAssessment(
-        vehicleType: VehicleType.running,
-        confidence: 0.90,
-        isDriving: false,
-        reasoning: 'Running pace (${currentSpeedKmh.toStringAsFixed(1)} km/h) • Non-driving',
-        speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
-      );
-    }
-
-    // (d) Bike / Two-Wheeler: 15 - 55 km/h
-    if (currentSpeedKmh <= 55.0) {
-      return AiDrivingAssessment(
-        vehicleType: VehicleType.twoWheeler,
-        confidence: 0.92,
-        isDriving: true,
-        reasoning: 'Two-Wheeler / Bike speed (${currentSpeedKmh.toStringAsFixed(1)} km/h) • Driving mode engaged',
-        speedKmh: currentSpeedKmh,
-        accelerationMps2: acceleration,
-      );
-    }
-
-    // (e) Car: > 55 km/h
+    final bool isDrivingMock = currentSpeedKmh >= 15.0;
     return AiDrivingAssessment(
-      vehicleType: VehicleType.car,
-      confidence: 0.96,
-      isDriving: true,
-      reasoning: 'Car cruising speed (${currentSpeedKmh.toStringAsFixed(1)} km/h) • Driving mode engaged',
+      vehicleType: _simulatedVehicleOverride ??
+          (isDrivingMock ? VehicleType.car : VehicleType.stationary),
+      confidence: 0.5,
+      isDriving: isDrivingMock,
+      reasoning: 'Stub classifier: Speed = ${currentSpeedKmh.toStringAsFixed(1)} km/h',
       speedKmh: currentSpeedKmh,
-      accelerationMps2: acceleration,
+      accelerationMps2: 0.0,
     );
   }
 }
